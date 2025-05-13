@@ -26,7 +26,7 @@
     <ClInclude Include="List.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sequence.h">
+    <ClInclude Include="Algorithm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

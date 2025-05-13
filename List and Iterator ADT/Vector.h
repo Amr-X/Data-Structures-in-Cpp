@@ -1,14 +1,36 @@
 ﻿#pragma once
-#include <assert.h>
 #include <stdexcept>
-// External Linkage with this
+
+// This is Enough for now
 
 template<typename T>
 class vector {
 public:
 	// Declaring To know it's existence
 	// Public To give user access to (Instantiating)
-	class iterator;
+	class iterator
+	{
+		friend class vector<T>;
+		// Pointer Based Iterator
+	private:
+		T* m_pointer;
+		// I don't think the user would need this -- He wants the copy/move constructor
+		iterator(T* pointer);
+	public:
+		// Dependent and Independent Members
+
+		// Note : Any iterator can become invalid  
+		iterator& operator++();
+		iterator& operator--();
+		bool operator==(const iterator& rhs) const;
+		bool operator!=(const iterator& rhs) const;
+		T& operator*() const;
+		iterator operator+(int increment) const;
+		iterator operator-(int increment) const;
+		// copy / move
+
+		// Destructor? Why? It's just a pointer 
+	};
 private:
 	int m_size;
 	int m_capacity; // note -- number of elements
@@ -18,6 +40,7 @@ private:
 public:
 	vector(int size);
 	~vector();
+	// int i can be an iterator -- set(it, value)
 	T& at(int i) const;
 	T& operator[](int i) const;
 	void set(int i, const T& value);
@@ -41,6 +64,7 @@ template<typename T>
 vector<T>::~vector()
 {
 	// Should this loop on every element and delete it?
+	// No, delete [] will do that for you
 	delete[] m_array;
 }
 
@@ -78,7 +102,6 @@ void vector<T>::reserve(int N)
 	{
 		newArray[i] = m_array[i];
 	}
-	// Again -- Should this loop on every element and delete it?
 	delete[] m_array;
 	m_array = newArray;
 
@@ -123,40 +146,16 @@ void vector<T>::erase(int i)
 template <typename T>
 typename vector<T>::iterator vector<T>::begin() const
 {
-	return iterator(0);
+	return iterator(m_array);
 }
 template <typename T>
 typename vector<T>::iterator vector<T>::end() const
 {
-	return iterator(m_size);
+	// Yeah, It's beyond the last element
+	return iterator(m_array + m_size);
 }
 
 ///////////////////////////////////////////////////////
-
-// What if i want this to be private?
-// Iterator Class
-
-template<typename T>
-class vector<T>::iterator
-{
-	// Pointer Based Iterator
-private:
-	T* m_pointer;
-	// I don't think the user would need this -- He wants the copy/move constructor
-	iterator(T* pointer);
-public:
-	// Dependent and Independent Members
-
-	// Note : Any iterator can become invalid  
-	iterator& operator++();
-	iterator& operator--();
-	bool operator==(const iterator& rhs) const;
-	bool operator!=(const iterator& rhs) const;
-	T& operator*() const;
-	iterator operator+(int increment) const;
-	iterator operator-(int increment) const;
-	// copy / move
-};
 
 /// Iterator Class Implementation
 template <typename T>
@@ -165,14 +164,14 @@ vector<T>::iterator::iterator(T* pointer)
 
 // Why Typedef?
 template <typename T>
-vector<T>::iterator& vector<T>::iterator::operator++()
+typename vector<T>::iterator& vector<T>::iterator::operator++()
 {
 	// ++it -- Pointer arithmetic -- p + 1 * sizeof(datatype)
 	++m_pointer; return *this;
 }
 
 template <typename T>
-vector<T>::iterator& vector<T>::iterator::operator--()
+typename vector<T>::iterator& vector<T>::iterator::operator--()
 {
 	--m_pointer; return *this;
 }
@@ -186,7 +185,7 @@ inline bool vector<T>::iterator::operator==(const iterator& rhs) const
 template<typename T>
 inline bool vector<T>::iterator::operator!=(const iterator& rhs) const
 {
-	return rhs.m_pointer == m_pointer;
+	return rhs.m_pointer != m_pointer;
 }
 
 template <typename T>
@@ -197,14 +196,14 @@ T& vector<T>::iterator::operator*() const
 }
 
 template <typename T>
- vector<T>::iterator vector<T>::iterator::operator+(int increment) const
+typename vector<T>::iterator vector<T>::iterator::operator+(int increment) const
 {
 	// How to do this in index-based Iterator?
 	 return iterator(m_pointer + increment);
 }
 
 template <typename T>
- vector<T>::iterator vector<T>::iterator::operator-(int increment) const
+typename vector<T>::iterator vector<T>::iterator::operator-(int increment) const
 {
 	 return iterator(m_pointer - increment);
 }
