@@ -33,6 +33,7 @@ public:
 		iterator operator+(int increment);
 		iterator operator-(int increment);
 		T& operator*() const;
+		// No destructor
 	};
 	class const_iterator : public iterator
 	{
@@ -59,14 +60,24 @@ public:
 	list();
 	int size() const;
 	iterator insert(iterator position, const T& element);
+	iterator insertFront(const T& element);
+	iterator insertBack(const T& element);
 	iterator erase(iterator position);
+	iterator eraseBack(const T& element);
 
 	// created and copied to user -- not a reference
 	iterator begin() const;
 	iterator end() const;
 
-	// No destructor
-
+	// Copy Constructor
+	list(const list& rhs);
+	// Copy Assignment
+	list& operator=(const list& rhs);
+	// Move Constructor
+	list(list&& rhs) noexcept; // std::move now can use this - Exception Safe 
+	
+	// Destructor
+	~list();
 };
 
 
@@ -182,6 +193,18 @@ typename list<T>::iterator list<T>::insert (iterator position, const T& element)
 	return iterator(newNode);
 }
 
+template<typename T>
+inline typename list<T>::iterator list<T>::insertFront(const T& element)
+{
+	return insert(begin(), element);
+}
+
+template<typename T>
+inline typename list<T>::iterator list<T>::insertBack(const T& element)
+{
+	return insert(end(), element);
+}
+
 template <typename T>
 typename list<T>::iterator list<T>::erase(iterator position)
 {
@@ -200,6 +223,12 @@ typename list<T>::iterator list<T>::erase(iterator position)
 	return iterator(next); // or return end();
 }
 
+template <typename T>
+typename list<T>::iterator list<T>::eraseBack(const T& element)
+{
+	return erase(end() - 1, element);
+}
+
 
 template <typename T>
 typename list<T>::iterator list<T>::begin() const
@@ -211,5 +240,93 @@ template <typename T>
 typename list<T>::iterator list<T>::end() const
 {
 	return iterator(trailer);
+}
+
+template<typename T>
+inline list<T>::list(const list& rhs)
+{
+	header = new node();
+	trailer = new node();
+	header->m_next = trailer;
+	trailer->m_prev = header;
+
+	// Will go from .begin to .end
+	for (auto& element : rhs)
+	{
+		// Don't confuse this up with insertFront... We don't want the reserve of it
+		insertBack(element);
+	}
+	// Count Every Element Being Added? Or just m_size = rhs.m_size; -- Oh, Insert Already Does That...
+}
+
+template<typename T>
+inline list<T>& list<T>::operator=(const list& rhs)
+{
+	// This time a list already exist - So
+	// Should I preserve the address of the original nodes? -- I think so
+	// What about rhs elements Beyond m_size nodes? this* [5,10] - rhs [55,100,"20"]
+
+	// Self-Assignment
+	if (this == &rhs) return *this;
+
+	iterator original_it = begin();
+	const_iterator rhs_it = rhs.begin();
+
+	while (original_it != end() && rhs_it != rhs.end())
+	{
+		*original_it = *rhs_it;
+		++rhs_it; ++original_it;
+	}
+	// if there is more elements in rhs
+	while (rhs_it != rhs.end())
+	{
+		insertBack(*rhs_it);
+		++rhs_it;
+	}
+	// if there is more elements in original
+	while (original_it != end())
+	{
+		// This is Tricky - erase will return a copy of the next element
+		// So we will advance first - Post-increment
+		iterator first = original_it++;
+		erase(first);
+	}
+	return *this;
+}
+
+template<typename T>
+inline list<T>::list(list&& rhs) noexcept
+{
+	// Move - Steal
+	header = rhs.header; rhs.header = new node();
+	trailer = rhs.trailer; rhs.trailer = new node();
+	m_size = rhs.m_size; rhs.m_size = 0;
+
+	// It was build on that premise
+	rhs.header->m_next = rhs.trailer;
+	rhs.trailer->m_prev = rhs.header;
+
+
+}
+
+template<typename T>
+inline list<T>::~list()
+{
+	// Raw Pointers? or Iterator?
+	// Well, I don't know .. but I fell raw pointers since the object is about to be destroyed
+
+
+	// Node: header->prev = nullptr , trailer->next = nullptr
+	// So this should work fine
+
+	node* curr = header;
+	node* temp = nullptr;
+	while (curr)
+	{
+		temp = curr;
+		curr = curr->next;
+		delete temp;
+	}
+	
 }
 

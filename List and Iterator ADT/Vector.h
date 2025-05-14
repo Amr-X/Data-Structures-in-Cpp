@@ -46,6 +46,11 @@ public:
 	void set(int i, const T& value);
 	void insert(int i, const T& value); 
 	void erase(int i);
+	int size() const;
+
+	vector(const vector& rhs);
+	vector& operator=(const vector& rhs);
+	vector(vector&& rhs) noexcept;
 
 	// Iterator -- More Here
 	iterator begin() const;
@@ -142,6 +147,59 @@ void vector<T>::erase(int i)
 
 	m_capacity--;
 }
+
+template <typename T>
+int vector<T>::size() const
+{
+	return m_capacity;
+}
+
+template <typename T>
+vector<T>::vector(const vector& rhs)
+{
+	// I've confused capacity with size
+	m_array = new T[rhs.m_capacity];
+	m_capacity = rhs.m_capacity;
+	m_size = rhs.m_size;
+
+	// Copy them
+	for (int i = 0; i < rhs.m_size; ++i)
+	{
+		// Just Copy Actual Values
+		m_array[i] = rhs.m_array[i];
+	}
+}
+
+template <typename T>
+vector<T>& vector<T>::operator=(const vector& rhs)
+{
+	if (this == &rhs) return *this;
+
+	m_capacity = rhs.m_capacity;
+	m_size = rhs.m_size;
+	delete m_array;
+	m_array = new T[rhs.m_capacity];
+
+	// Copy
+	for (int i = 0; i < rhs.m_capacity; i++)
+	{
+		m_array[i] = rhs.m_array[i];
+	}
+	return *this;
+}
+
+template <typename T>
+vector<T>::vector(vector&& rhs) noexcept
+{
+	m_array = rhs.m_array;
+	m_capacity = rhs.m_capacity; rhs.m_size = 0;
+	m_size = rhs.m_size; rhs.m_capacity = 0;
+
+	// I don't know what to do with m_array
+	// Null?
+	rhs.m_array = nullptr;
+}
+
 // Vector Iterators
 template <typename T>
 typename vector<T>::iterator vector<T>::begin() const
@@ -166,7 +224,7 @@ vector<T>::iterator::iterator(T* pointer)
 template <typename T>
 typename vector<T>::iterator& vector<T>::iterator::operator++()
 {
-	// ++it -- Pointer arithmetic -- p + 1 * sizeof(datatype)
+	// ++it -- Pointer arithmetic -- p + 1 * sizeof(type)
 	++m_pointer; return *this;
 }
 
